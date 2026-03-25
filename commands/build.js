@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
 const axios = require('axios');
 
 const API_BASE = process.env.API_BASE_URL || 'https://betacloud.is-cool.dev';
@@ -52,52 +52,21 @@ module.exports = {
         return;
       }
 
-      const embeds = [];
-
-      // BetaWiki Section
+      // Handle Pagination for BetaWiki matches
+      let matches = [];
       if (data.betawiki?.found) {
         if (data.betawiki.matches_count > 1) {
-          // Multiple results
-          embeds.push(
-            new EmbedBuilder()
-              .setColor(0x0099FF)
-              .setTitle(`📋 BetaWiki - Build ${buildNumber}`)
-              .setDescription(`**${data.betawiki.matches_count}** results found`)
-              .addFields(
-                ...data.betawiki.matches.map((match, idx) => ({
-                  name: `${idx + 1}. ${match.build_page_title}`,
-                  value: `OS: ${match.operating_system || 'N/A'}\nCompiled: ${match.compiled || 'N/A'}\nTag: ${match.tags?.confirmed ? '✓' : '❌'} Confirmed`,
-                  inline: false
-                }))
-              )
-              .setFooter({ text: `Source: ${data.betawiki.matches[0].source}` })
-          );
+          matches = data.betawiki.matches;
         } else {
-          // Single result
-          const match = data.betawiki.matches?.[0] || data.betawiki;
-          embeds.push(
-            new EmbedBuilder()
-              .setColor(0x0099FF)
-              .setTitle(`📋 BetaWiki - ${match.build_page_title}`)
-              .setURL(match.url)
-              .addFields(
-                { name: 'OS', value: match.operating_system || 'N/A', inline: true },
-                { name: 'OS Version', value: match.os_version || 'N/A', inline: true },
-                { name: 'Manufacturer', value: match.produced_by || 'Microsoft', inline: true },
-                { name: 'Compiled', value: match.compiled || 'N/A', inline: true },
-                { name: 'Timebomb', value: match.timebomb || 'N/A', inline: true },
-                { name: 'Status', value: match.tags?.confirmed ? '✓ Confirmed' : match.tags?.leaked ? '🔓 Leaked' : '❓ Unknown', inline: true }
-              )
-              .setFooter({ text: `Source: ${data.betawiki.source || 'BetaWiki'}` })
-          );
+          matches = [data.betawiki.matches?.[0] || data.betawiki];
         }
       }
 
-      // UUP Dump Section
+      // UUP Dump Embed (static)
+      let uupEmbed = null;
       if (data.uupdump?.builds && data.uupdump.builds.length > 0) {
         const topBuilds = data.uupdump.builds.slice(0, 5);
-        embeds.push(
-          new EmbedBuilder()
+        uupEmbed = new EmbedBuilder()
             .setColor(0x00AA00)
             .setTitle(`📦 UUP Dump - Build ${buildNumber}`)
             .setDescription(`**${data.uupdump.total}** builds available`)
@@ -108,11 +77,78 @@ module.exports = {
                 .join('\n'),
               inline: false
             })
-            .setFooter({ text: `Visit: https://uupdump.net` })
-        );
+            .setFooter({ text: `Visit: https://uupdump.net` });
       }
 
-      await interaction.editReply({ embeds });
+      let currentIndex = 0;
+
+      const generateEmbed = (index) => {
+          const match = matches[index];
+          return new EmbedBuilder()
+              .setColor(0x0099FF)
+              .setTitle(`📋 BetaWiki - ${match.build_page_title} (${index + 1}/${matches.length})`)
+              .setURL(match.url)
+              .addFields(
+                { name: 'OS', value: match.operating_system || 'N/A', inline: true },
+                { name: 'OS Version', value: match.os_version || 'N/A', inline: true },
+                { name: 'Manufacturer', value: match.produced_by || 'Microsoft', inline: true },
+                { name: 'Compiled', value: match.compiled || 'N/A', inline: true },
+                { name: 'Timebomb', value: match.timebomb || 'N/A', inline: true },
+                { name: 'Status', value: match.tags?.confirmed ? '✓ Confirmed' : match.tags?.leaked ? '🔓 Leaked' : '❓ Unknown', inline: true }
+              )
+              .setFooter({ text: `Source: ${match.source || data.betawiki?.source || 'BetaWiki'}` });
+      };
+
+      const getPayload = (index) => {
+          const contentEmbeds = [];
+          if (matches.length > 0) contentEmbeds.push(generateEmbed(index));
+          if (uupEmbed) contentEmbeds.push(uupEmbed);
+          
+          const components = [];
+          if (matches.length > 1) {
+              const row = new ActionRowBuilder()
+                  .addComponents(
+                      new ButtonBuilder()
+                          .setCustomId('prev')
+                          .setLabel('◀️ Previous')
+                          .setStyle(ButtonStyle.Primary)
+                          .setDisabled(index === 0),
+                      new ButtonBuilder()
+                          .setCustomId('next')
+                          .setLabel('Next ▶️')
+                          .setStyle(ButtonStyle.Primary)
+                          .setDisabled(index === matches.length - 1)
+                  );
+              components.push(row);
+          }
+          return { embeds: contentEmbeds, components: components };
+      };
+
+      const message = await interaction.editReply(getPayload(currentIndex));
+
+      if (matches.length > 1) {
+          const collector = message.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+
+          collector.on('collect', async i => {
+              if (i.user.id !== interaction.user.id) {
+                  return i.reply({ content: 'Only the command user can navigate matches.', ephemeral: true });
+              }
+              
+              if (i.customId === 'prev') {
+                  currentIndex = currentIndex > 0 ? currentIndex - 1 : 0;
+              } else if (i.customId === 'next') {
+                  currentIndex = currentIndex < matches.length - 1 ? currentIndex + 1 : matches.length - 1;
+              }
+              
+              await i.update(getPayload(currentIndex));
+          });
+
+          collector.on('end', () => {
+              const disabledPayload = getPayload(currentIndex);
+              disabledPayload.components.forEach(row => row.components.forEach(btn => btn.setDisabled(true)));
+              interaction.editReply({ components: disabledPayload.components }); 
+          });
+      }
 
     } catch (error) {
       console.error('API Error:', error.message);

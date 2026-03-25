@@ -101,8 +101,9 @@ module.exports = {
 
       const getPayload = (index) => {
           const contentEmbeds = [];
-          if (matches.length > 0) contentEmbeds.push(generateEmbed(index));
+          // Show UUP Dump first so BetaWiki is at the bottom, right above the buttons
           if (uupEmbed) contentEmbeds.push(uupEmbed);
+          if (matches.length > 0) contentEmbeds.push(generateEmbed(index));
           
           const components = [];
           if (matches.length > 1) {

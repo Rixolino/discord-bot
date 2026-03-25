@@ -3,14 +3,28 @@ const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const axios = require('axios');
 
-// --- Setup Web Server (per hosting cloud) ---
+// --- Setup Web Server & Keep-Alive ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Discord Bot is Online! 🤖');
+  res.send({ status: 'online', timestamp: new Date() });
 });
+
+// Auto-Ping (strategia di backup per Render/Glitch/Replit)
+// Pinga se stesso ogni 14 minuti per evitare lo sleep
+if (process.env.RENDER_EXTERNAL_URL) {
+  const url = process.env.RENDER_EXTERNAL_URL;
+  console.log(`⏰ Keep-Alive attivato per: ${url}`);
+  
+  setInterval(() => {
+    axios.get(url)
+      .then(() => console.log(`[Keep-Alive] Ping riuscito a ${url}`))
+      .catch(err => console.error(`[Keep-Alive] Errore: ${err.message}`));
+  }, 14 * 60 * 1000); // 14 minuti
+}
 
 app.listen(PORT, () => {
   console.log(`🌐 Server web in ascolto sulla porta ${PORT}`);

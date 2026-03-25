@@ -78,11 +78,25 @@ client.on('interactionCreate', async (interaction) => {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
-    await interaction.reply({
-      content: '❌ Errore nell\'eseguire il comando!',
-      ephemeral: true
-    });
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: '❌ Errore nell\'eseguire il comando!', ephemeral: true });
+    } else {
+      await interaction.reply({ content: '❌ Errore nell\'eseguire il comando!', ephemeral: true });
+    }
   }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// Gestione errori globali
+process.on('unhandledRejection', error => {
+  console.error('Unhandled promise rejection:', error);
+});
+
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error('ERRORE LOGIN:', error.message);
+  if (error.code === 'DisallowedIntents') {
+    console.error('>>> ATTENZIONE: Devi abilitare "Message Content Intent" nel Developer Portal!');
+  }
+  if (error.code === 'TokenInvalid') {
+    console.error('>>> ATTENZIONE: Il token non è valido (forse hai copiato la Public Key?)');
+  }
+});

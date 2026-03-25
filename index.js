@@ -2,6 +2,20 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+
+// --- Setup Web Server (per hosting cloud) ---
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Discord Bot is Online! 🤖');
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Server web in ascolto sulla porta ${PORT}`);
+});
+// --------------------------------------------
 
 const client = new Client({ 
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] 

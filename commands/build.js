@@ -9,7 +9,7 @@ module.exports = {
     .setDescription('Search information on a Windows build')
     .addStringOption(option =>
       option
-        .setName('numero')
+        .setName('number')
         .setDescription('Build number (e.g.: 22621 or 4.10.1526)')
         .setRequired(true)
     )
@@ -23,7 +23,7 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply();
 
-    const buildNumber = interaction.options.getString('numero');
+    const buildNumber = interaction.options.getString('number');
     const allOs = interaction.options.getBoolean('all-os') || false;
 
     try {

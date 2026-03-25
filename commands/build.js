@@ -21,10 +21,17 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    // deferReply non deve avere timeout, ma la risposta API sì.
+    // L'API della ricerca globale può metterci fino a 30-40 secondi.
     await interaction.deferReply();
 
     const buildNumber = interaction.options.getString('number');
     const allOs = interaction.options.getBoolean('all-os') || false;
+
+    // Se l'utente chiede all-os, avvisiamo che potrebbe volerci tempo
+    if (allOs) {
+      await interaction.editReply(`🔍 Ricerca approfondita per **${buildNumber}** in corso... (può richiedere fino a 45 secondi)`);
+    }
 
     try {
       // Call the API
@@ -33,7 +40,7 @@ module.exports = {
       console.log(`[Discord Bot] Searching build: ${buildNumber}, all-os: ${allOs}`);
       
       const response = await axios.get(url, {
-        timeout: 10000
+        timeout: 45000 // Aumentato a 45 secondi
       });
 
       const data = response.data;

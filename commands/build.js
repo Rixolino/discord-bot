@@ -97,7 +97,7 @@ module.exports = {
             .addFields({
               name: 'Top 5 Builds',
               value: topBuilds
-                .map(b => `• **[${b.build}](https://uupdump.net/known.html?build=${b.build})** - ${b.arch} - <t:${b.created}:d>`)
+                .map(b => `• **[${b.build}](https://uupdump.net/selectlang.php?id=${b.uuid})** - ${b.arch} - <t:${b.created}:d>`)
                 .join('\n'),
               inline: false
             })

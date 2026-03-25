@@ -90,7 +90,7 @@ module.exports = {
         const buildList = uupBuilds
           .map(b => {
             const date = new Date(b.created * 1000);
-            return `• **[${b.build}](https://uupdump.net/known.html?build=${b.build})** (${b.arch}) - ${date.toLocaleDateString('en-US')}`;
+            return `• **[${b.build}](https://uupdump.net/selectlang.php?id=${b.uuid})** (${b.arch}) - ${date.toLocaleDateString('en-US')}`;
           })
           .join('\n');
 

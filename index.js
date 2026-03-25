@@ -13,21 +13,21 @@ app.get('/', (req, res) => {
   res.send({ status: 'online', timestamp: new Date() });
 });
 
-// Auto-Ping (strategia di backup per Render/Glitch/Replit)
-// Pinga se stesso ogni 14 minuti per evitare lo sleep
+// Auto-Ping (backup strategy for Render/Glitch/Replit)
+// Pings itself every 14 minutes to prevent sleep
 if (process.env.RENDER_EXTERNAL_URL) {
   const url = process.env.RENDER_EXTERNAL_URL;
-  console.log(`⏰ Keep-Alive attivato per: ${url}`);
+  console.log(`⏰ Keep-Alive activated for: ${url}`);
   
   setInterval(() => {
     axios.get(url)
-      .then(() => console.log(`[Keep-Alive] Ping riuscito a ${url}`))
-      .catch(err => console.error(`[Keep-Alive] Errore: ${err.message}`));
-  }, 14 * 60 * 1000); // 14 minuti
+      .then(() => console.log(`[Keep-Alive] Ping successful to ${url}`))
+      .catch(err => console.error(`[Keep-Alive] Error: ${err.message}`));
+  }, 14 * 60 * 1000); // 14 minutes
 }
 
 app.listen(PORT, () => {
-  console.log(`🌐 Server web in ascolto sulla porta ${PORT}`);
+  console.log(`🌐 Web server listening on port ${PORT}`);
 });
 // --------------------------------------------
 
@@ -35,7 +35,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] 
 });
 
-// Carica i comandi
+// Load commands
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -48,12 +48,12 @@ for (const file of commandFiles) {
   commands.push(command.data.toJSON());
 }
 
-// Registra gli slash command su Discord
+// Register slash commands to Discord
 client.once('ready', async () => {
-  console.log(`✓ Bot loggato come ${client.user.tag}`);
+  console.log(`✓ Bot logged in as ${client.user.tag}`);
   
   try {
-    console.log('📝 Registrazione slash command...');
+    console.log('📝 Registering slash commands...');
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     
     await rest.put(
@@ -61,13 +61,13 @@ client.once('ready', async () => {
       { body: commands }
     );
     
-    console.log('✓ Slash command registrati');
+    console.log('✓ Slash commands registered');
   } catch (error) {
-    console.error('✗ Errore registrazione slash command:', error);
+    console.error('✗ Error registering slash commands:', error);
   }
 });
 
-// Gestisce gli slash command
+// Handles slash commands
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -79,24 +79,24 @@ client.on('interactionCreate', async (interaction) => {
   } catch (error) {
     console.error(error);
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: '❌ Errore nell\'eseguire il comando!', ephemeral: true });
+      await interaction.followUp({ content: '❌ Error executing command!', ephemeral: true });
     } else {
-      await interaction.reply({ content: '❌ Errore nell\'eseguire il comando!', ephemeral: true });
+      await interaction.reply({ content: '❌ Error executing command!', ephemeral: true });
     }
   }
 });
 
-// Gestione errori globali
+// Global error handling
 process.on('unhandledRejection', error => {
   console.error('Unhandled promise rejection:', error);
 });
 
 client.login(process.env.DISCORD_TOKEN).catch(error => {
-  console.error('ERRORE LOGIN:', error.message);
+  console.error('LOGIN ERROR:', error.message);
   if (error.code === 'DisallowedIntents') {
-    console.error('>>> ATTENZIONE: Devi abilitare "Message Content Intent" nel Developer Portal!');
+    console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
   }
   if (error.code === 'TokenInvalid') {
-    console.error('>>> ATTENZIONE: Il token non è valido (forse hai copiato la Public Key?)');
+    console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
   }
 });

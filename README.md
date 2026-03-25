@@ -1,30 +1,30 @@
 # Discord Bot - BetaCloud API
 
-Bot Discord per cercare informazioni sui build Windows utilizzando l'API BetaCloud.
+Discord bot for searching Windows build information using the BetaCloud API.
 
-## Installazione
+## Installation
 
-### 1. Prerequisiti
-- Node.js 16.9.0 o superiore
-- Discord bot token da [Discord Developer Portal](https://discord.com/developers/applications)
-- Client ID del bot
+### 1. Requirements
+- Node.js 16.9.0 or higher
+- Discord bot token from [Discord Developer Portal](https://discord.com/developers/applications)
+- Bot Client ID
 
-### 2. Setup Locale
+### 2. Local Setup
 
 ```bash
-# Clona o scarica il progetto
+# Clone or download the project
 cd discord-bot
 
-# Installa dipendenze
+# Install dependencies
 npm install
 
-# Copia il file di configurazione e modifica i valori
+# Copy the configuration file and modify the values
 cp .env.example .env
 ```
 
-### 3. Configurazione .env
+### 3. Configure .env
 
-Modifica il file `.env`:
+Edit the `.env` file:
 
 ```
 DISCORD_TOKEN=your_bot_token_here
@@ -32,68 +32,68 @@ DISCORD_CLIENT_ID=your_client_id_here
 API_BASE_URL=https://betacloud.is-cool.dev
 ```
 
-### 4. Esecuzione Locale
+### 4. Local Execution
 
-**Con nodemon (auto-reload su modifiche)**:
+**With nodemon (auto-reload on changes)**:
 ```bash
 npm run dev
 ```
 
-**Esecuzione normale**:
+**Normal execution**:
 ```bash
 npm start
 ```
 
-## Comandi Discord
+## Discord Commands
 
 ### `/build numero [all-os]`
-Cerca informazioni su un build Windows specifico.
+Search information on a specific Windows build.
 
-**Parametri:**
-- `numero` (obbligatorio): Numero build (es: 22621, 4.10.1526)
-- `all-os` (facoltativo): Se "Sì", cerca in TUTTI gli OS (default: No)
+**Parameters:**
+- `numero` (required): Build number (e.g.: 22621, 4.10.1526)
+- `all-os` (optional): If "Yes", search in ALL OS (default: No)
 
-**Esempi:**
+**Examples:**
 ```
 /build numero:22621
-/build numero:22621 all-os:Sì
+/build numero:22621 all-os:Yes
 /build numero:4.10.1526
 ```
 
 ### `/latest [windows]`
-Mostra i build Windows più recenti.
+Show the most recent Windows builds.
 
-**Parametri:**
-- `windows` (facoltativo): Seleziona la versione (default: Windows 11)
+**Parameters:**
+- `windows` (optional): Select version (default: Windows 11)
   - Windows 11
   - Windows 10
   - Windows Server 2025
   - Windows Server 2022
 
-**Esempi:**
+**Examples:**
 ```
 /latest
 /latest windows:Windows 10
 /latest windows:Windows Server 2022
 ```
 
-## Deployment Remoto
+## Remote Deployment
 
-### Deploy su Heroku
+### Deploy to Heroku
 
-1. **Crea account Heroku** e installa Heroku CLI
+1. **Create Heroku account** and install Heroku CLI
 
-2. **Login a Heroku**:
+2. **Login to Heroku**:
 ```bash
 heroku login
 ```
 
-3. **Crea app**:
+3. **Create app**:
 ```bash
 heroku create your-bot-name
 ```
 
-4. **Configura variabili d'ambiente**:
+4. **Configure environment variables**:
 ```bash
 heroku config:set DISCORD_TOKEN="your_token"
 heroku config:set DISCORD_CLIENT_ID="your_client_id"
@@ -103,121 +103,121 @@ heroku config:set API_BASE_URL="https://betacloud.is-cool.dev"
 5. **Deploy**:
 ```bash
 git push heroku main
-# oppure
+# or
 git push heroku master
 ```
 
-6. **Visualizza log**:
+6. **View logs**:
 ```bash
 heroku logs --tail
 ```
 
-### Deploy su VPS (Ubuntu/Debian)
+### Deploy to VPS (Ubuntu/Debian)
 
-1. **SSH nel server**:
+1. **SSH into server**:
 ```bash
 ssh user@your_server_ip
 ```
 
-2. **Installa Node.js**:
+2. **Install Node.js**:
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-3. **Clona il repository**:
+3. **Clone the repository**:
 ```bash
 git clone your_repo_url
 cd discord-bot
 npm install
 ```
 
-4. **Crea .env file**:
+4. **Create .env file**:
 ```bash
 nano .env
-# Incolla le variabili di configurazione
+# Paste configuration variables
 ```
 
-5. **Installa PM2** (process manager):
+5. **Install PM2** (process manager):
 ```bash
 sudo npm install -g pm2
 ```
 
-6. **Avvia il bot con PM2**:
+6. **Start bot with PM2**:
 ```bash
 pm2 start index.js --name "betacloud-bot"
 pm2 save
 pm2 startup
 ```
 
-7. **Visualizza log**:
+7. **View logs**:
 ```bash
 pm2 logs betacloud-bot
 ```
 
-## Registrazione Bot su Discord
+## Register Bot on Discord
 
-1. Vai a [Discord Developer Portal](https://discord.com/developers/applications)
-2. Clicca "New Application"
-3. Assegna un nome (es: "BetaCloud Bot")
-4. Vai su "Bot" → "Add Bot"
-5. Attiva **Message Content Intent** (importante!)
-6. Copia il token e mettilo nel `.env`
-7. Vai su "OAuth2" → "URL Generator"
-8. Seleziona scope: `bot` e `applications.commands`
-9. Seleziona permessi: `Send Messages`, `Read Messages`
-10. Copia l'URL generato e aprilo per invitare il bot al server
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Click "New Application"
+3. Assign a name (e.g.: "BetaCloud Bot")
+4. Go to "Bot" → "Add Bot"
+5. Enable **Message Content Intent** (important!)
+6. Copy the token and put it in `.env`
+7. Go to "OAuth2" → "URL Generator"
+8. Select scope: `bot` and `applications.commands`
+9. Select permissions: `Send Messages`, `Read Messages`
+10. Copy the generated URL and open it to invite the bot to your server
 
 ## Troubleshooting
 
-### Bot non risponde ai comandi
-- Verifica che il token sia corretto in `.env`
-- Assicurati che **Message Content Intent** sia attivato
-- Riavvia il bot: `pm2 restart betacloud-bot`
+### Bot doesn't respond to commands
+- Verify that the token in `.env` is correct
+- Make sure **Message Content Intent** is enabled
+- Restart the bot: `pm2 restart betacloud-bot`
 
-### Errore API
-- Controlla che `API_BASE_URL` in `.env` sia corretto
-- Verifica la connessione internet con: `curl https://betacloud.is-cool.dev/api/public/build-info?build=22621`
+### API Error
+- Check that `API_BASE_URL` in `.env` is correct
+- Verify internet connection with: `curl https://betacloud.is-cool.dev/api/public/build-info?build=22621`
 
-### Build a 0 risultati
-- Prova con `all-os:Sì` per cercare in tutti gli OS
-- Verifica che il numero build sia valido
+### Build returns 0 results
+- Try with `all-os:Yes` to search in all OS
+- Verify that the build number is valid
 
-## Struttura File
+## File Structure
 
 ```
 discord-bot/
-├── index.js              # Entry point del bot
-├── package.json          # Dipendenze
-├── .env                  # Configurazione (non commitare)
-├── .env.example          # Template .env
+├── index.js              # Bot entry point
+├── package.json          # Dependencies
+├── .env                  # Configuration (don't commit)
+├── .env.example          # .env template
 └── commands/
-    ├── build.js          # Comando /build
-    └── latest.js         # Comando /latest
+    ├── build.js          # /build command
+    └── latest.js         # /latest command
 ```
 
-## Sviluppo
+## Development
 
-Per aggiungere nuovi comandi:
+To add new commands:
 
-1. Crea file in `commands/nomefile.js`
-2. Usa il template:
+1. Create file in `commands/filename.js`
+2. Use the template:
 ```javascript
 const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('nomecomando')
-    .setDescription('Descrizione'),
+    .setName('commandname')
+    .setDescription('Description'),
   
   async execute(interaction) {
-    // Codice del comando
+    // Command code
   }
 };
 ```
 
-3. Il bot caricherà automaticamente il comando
+3. The bot will automatically load the command
 
 ## Support
 
-Problemi? Controlla il file dei log o apri una issue nel repository.
+Having issues? Check the log file or open an issue in the repository.

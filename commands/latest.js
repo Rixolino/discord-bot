@@ -6,11 +6,11 @@ const API_BASE = process.env.API_BASE_URL || 'https://betacloud.is-cool.dev';
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('latest')
-    .setDescription('Mostra i build Windows più recenti')
+    .setDescription('Show the most recent Windows builds')
     .addStringOption(option =>
       option
         .setName('windows')
-        .setDescription('Versione Windows')
+        .setDescription('Windows version')
         .setRequired(false)
         .addChoices(
           { name: 'Windows 11', value: 'windows-11' },
@@ -26,7 +26,7 @@ module.exports = {
     const version = interaction.options.getString('windows') || 'windows-11';
 
     try {
-      // Mappe per le query di build
+      // Build query map
       const queries = {
         'windows-11': '22',
         'windows-10': '19',
@@ -36,10 +36,10 @@ module.exports = {
 
       const buildPrefix = queries[version];
       
-      // Chiama l'API con multiple query
+      // Call API with multiple queries
       const url = `${API_BASE}/api/public/build-info?build=${buildPrefix}&betawiki=true&uupdump=true&all-os=true`;
       
-      console.log(`[Discord Bot] Cercando build recenti per: ${version}`);
+      console.log(`[Discord Bot] Searching recent builds for: ${version}`);
       
       const response = await axios.get(url, {
         timeout: 10000
@@ -47,7 +47,7 @@ module.exports = {
 
       const data = response.data;
 
-      // Estrai i build da BetaWiki
+      // Extract builds from BetaWiki
       let betaWikiBuilds = [];
       if (data.betawiki?.found) {
         if (data.betawiki.matches && Array.isArray(data.betawiki.matches)) {
@@ -57,13 +57,13 @@ module.exports = {
         }
       }
 
-      // Estrai i build da UUP Dump
+      // Extract builds from UUP Dump
       let uupBuilds = [];
       if (data.uupdump?.builds && Array.isArray(data.uupdump.builds)) {
         uupBuilds = data.uupdump.builds.slice(0, 10);
       }
 
-      // Crea embed per BetaWiki
+      // Create embed for BetaWiki
       const embeds = [];
 
       if (betaWikiBuilds.length > 0) {
@@ -76,8 +76,8 @@ module.exports = {
                 name: `${idx + 1}. ${build.build_page_title}`,
                 value: [
                   `**OS:** ${build.operating_system}`,
-                  `**Compilato:** ${build.compiled || 'N/A'}`,
-                  `**Stato:** ${build.tags?.confirmed ? '✓ Confermato' : build.tags?.leaked ? '🔓 Leaked' : '❓'}`
+                  `**Compiled:** ${build.compiled || 'N/A'}`,
+                  `**Status:** ${build.tags?.confirmed ? '✓ Confirmed' : build.tags?.leaked ? '🔓 Leaked' : '❓'}`
                 ].join('\n'),
                 inline: false
               }))
@@ -85,12 +85,12 @@ module.exports = {
         );
       }
 
-      // Crea embed per UUP Dump
+      // Create embed for UUP Dump
       if (uupBuilds.length > 0) {
         const buildList = uupBuilds
           .map(b => {
             const date = new Date(b.created * 1000);
-            return `• **${b.build}** (${b.arch}) - ${date.toLocaleDateString('it-IT')}`;
+            return `• **[${b.build}](https://uupdump.net/known.html?build=${b.build})** (${b.arch}) - ${date.toLocaleDateString('en-US')}`;
           })
           .join('\n');
 
@@ -98,9 +98,9 @@ module.exports = {
           new EmbedBuilder()
             .setColor(0x00AA00)
             .setTitle(`📦 UUP Dump - ${version.replace(/-/g, ' ').toUpperCase()}`)
-            .setDescription(`I 10 build più recenti`)
+            .setDescription(`The 10 most recent builds`)
             .addFields({
-              name: 'Build Recenti',
+              name: 'Recent Builds',
               value: buildList,
               inline: false
             })
@@ -109,7 +109,7 @@ module.exports = {
 
       if (embeds.length === 0) {
         await interaction.editReply({
-          content: `❌ Nessun build trovato per ${version}`
+          content: `❌ No builds found for ${version}`
         });
         return;
       }
@@ -117,9 +117,9 @@ module.exports = {
       await interaction.editReply({ embeds });
 
     } catch (error) {
-      console.error('Errore API:', error.message);
+      console.error('API Error:', error.message);
       await interaction.editReply({
-        content: `❌ Errore: ${error.response?.data?.error || error.message}`
+        content: `❌ Error: ${error.response?.data?.error || error.message}`
       });
     }
   }

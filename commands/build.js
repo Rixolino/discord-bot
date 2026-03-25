@@ -6,17 +6,17 @@ const API_BASE = process.env.API_BASE_URL || 'https://betacloud.is-cool.dev';
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('build')
-    .setDescription('Cerca informazioni su un build Windows')
+    .setDescription('Search information on a Windows build')
     .addStringOption(option =>
       option
         .setName('numero')
-        .setDescription('Numero build (es: 22621 o 4.10.1526)')
+        .setDescription('Build number (e.g.: 22621 or 4.10.1526)')
         .setRequired(true)
     )
     .addBooleanOption(option =>
       option
         .setName('all-os')
-        .setDescription('Mostra da tutti gli OS (default: no)')
+        .setDescription('Show from all OS (default: no)')
         .setRequired(false)
     ),
 
@@ -27,10 +27,10 @@ module.exports = {
     const allOs = interaction.options.getBoolean('all-os') || false;
 
     try {
-      // Chiama l'API
+      // Call the API
       const url = `${API_BASE}/api/public/build-info?build=${buildNumber}&betawiki=true&uupdump=true${allOs ? '&all-os=true' : ''}`;
       
-      console.log(`[Discord Bot] Cercando build: ${buildNumber}, all-os: ${allOs}`);
+      console.log(`[Discord Bot] Searching build: ${buildNumber}, all-os: ${allOs}`);
       
       const response = await axios.get(url, {
         timeout: 10000
@@ -40,33 +40,33 @@ module.exports = {
 
       if (!data.betawiki?.found && (!data.uupdump?.builds || data.uupdump.builds.length === 0)) {
         await interaction.editReply({
-          content: `❌ Build **${buildNumber}** non trovato`
+          content: `❌ Build **${buildNumber}** not found`
         });
         return;
       }
 
       const embeds = [];
 
-      // Sezione BetaWiki
+      // BetaWiki Section
       if (data.betawiki?.found) {
         if (data.betawiki.matches_count > 1) {
-          // Multipli risultati
+          // Multiple results
           embeds.push(
             new EmbedBuilder()
               .setColor(0x0099FF)
               .setTitle(`📋 BetaWiki - Build ${buildNumber}`)
-              .setDescription(`**${data.betawiki.matches_count}** risultati trovati`)
+              .setDescription(`**${data.betawiki.matches_count}** results found`)
               .addFields(
                 ...data.betawiki.matches.map((match, idx) => ({
                   name: `${idx + 1}. ${match.build_page_title}`,
-                  value: `OS: ${match.operating_system || 'N/A'}\nCompilato: ${match.compiled || 'N/A'}\nTag: ${match.tags?.confirmed ? '✓' : '❌'} Confermato`,
+                  value: `OS: ${match.operating_system || 'N/A'}\nCompiled: ${match.compiled || 'N/A'}\nTag: ${match.tags?.confirmed ? '✓' : '❌'} Confirmed`,
                   inline: false
                 }))
               )
-              .setFooter({ text: `Fonte: ${data.betawiki.matches[0].source}` })
+              .setFooter({ text: `Source: ${data.betawiki.matches[0].source}` })
           );
         } else {
-          // Un risultato
+          // Single result
           const match = data.betawiki.matches?.[0] || data.betawiki;
           embeds.push(
             new EmbedBuilder()
@@ -75,42 +75,42 @@ module.exports = {
               .setURL(match.url)
               .addFields(
                 { name: 'OS', value: match.operating_system || 'N/A', inline: true },
-                { name: 'Versione OS', value: match.os_version || 'N/A', inline: true },
-                { name: 'Produttore', value: match.produced_by || 'Microsoft', inline: true },
-                { name: 'Compilato', value: match.compiled || 'N/A', inline: true },
+                { name: 'OS Version', value: match.os_version || 'N/A', inline: true },
+                { name: 'Manufacturer', value: match.produced_by || 'Microsoft', inline: true },
+                { name: 'Compiled', value: match.compiled || 'N/A', inline: true },
                 { name: 'Timebomb', value: match.timebomb || 'N/A', inline: true },
-                { name: 'Stato', value: match.tags?.confirmed ? '✓ Confermato' : match.tags?.leaked ? '🔓 Leaked' : '❓ Sconosciuto', inline: true }
+                { name: 'Status', value: match.tags?.confirmed ? '✓ Confirmed' : match.tags?.leaked ? '🔓 Leaked' : '❓ Unknown', inline: true }
               )
-              .setFooter({ text: `Fonte: ${data.betawiki.source || 'BetaWiki'}` })
+              .setFooter({ text: `Source: ${data.betawiki.source || 'BetaWiki'}` })
           );
         }
       }
 
-      // Sezione UUP Dump
+      // UUP Dump Section
       if (data.uupdump?.builds && data.uupdump.builds.length > 0) {
         const topBuilds = data.uupdump.builds.slice(0, 5);
         embeds.push(
           new EmbedBuilder()
             .setColor(0x00AA00)
             .setTitle(`📦 UUP Dump - Build ${buildNumber}`)
-            .setDescription(`**${data.uupdump.total}** build disponibili`)
+            .setDescription(`**${data.uupdump.total}** builds available`)
             .addFields({
-              name: 'Top 5 Build',
+              name: 'Top 5 Builds',
               value: topBuilds
-                .map(b => `• **${b.build}** - ${b.arch} - <t:${b.created}:d>`)
+                .map(b => `• **[${b.build}](https://uupdump.net/known.html?build=${b.build})** - ${b.arch} - <t:${b.created}:d>`)
                 .join('\n'),
               inline: false
             })
-            .setFooter({ text: `Visita: https://uupdump.net` })
+            .setFooter({ text: `Visit: https://uupdump.net` })
         );
       }
 
       await interaction.editReply({ embeds });
 
     } catch (error) {
-      console.error('Errore API:', error.message);
+      console.error('API Error:', error.message);
       await interaction.editReply({
-        content: `❌ Errore: ${error.response?.data?.error || error.message}`
+        content: `❌ Error: ${error.response?.data?.error || error.message}`
       });
     }
   }

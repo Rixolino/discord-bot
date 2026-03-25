@@ -13,6 +13,59 @@ app.get('/', (req, res) => {
   res.send({ status: 'online', timestamp: new Date() });
 });
 
+if (process.env.VERCEL) {
+  // Use HTTP interactions on Vercel
+  const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
+  app.use(express.json({ verify: verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY) }));
+
+  app.post('/interactions', async (req, res) => {
+    const { type, id, data, token, member } = req.body;
+    
+    if (type === InteractionType.PING) {
+      return res.send({ type: InteractionResponseType.PONG });
+    }
+
+    if (type === InteractionType.APPLICATION_COMMAND) {
+      const command = client.commands.get(data.name);
+      if (!command) return res.status(404).end();
+      
+      // Defer automatically for long running commands (like ours)
+      res.send({ type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE });
+
+      // Mock interaction object for compatibility
+      const mockInteraction = {
+        options: {
+          getString: (name) => data.options?.find(o => o.name === name)?.value,
+          getBoolean: (name) => data.options?.find(o => o.name === name)?.value,
+        },
+        user: member.user,
+        deferReply: async () => {}, // Already deferred via response
+        editReply: async (payload) => {
+          if (payload.embeds) payload.embeds = payload.embeds.map(e => e.toJSON ? e.toJSON() : e);
+          if (payload.components) payload.components = payload.components.map(c => c.toJSON ? c.toJSON() : c);
+          
+          try {
+            await axios.patch(
+              `https://discord.com/api/v10/webhooks/${process.env.DISCORD_CLIENT_ID}/${token}/messages/@original`,
+              payload
+            );
+          } catch(e) { console.error('Webhook Error:', e.response?.data || e.message); }
+          // Return a mock message object for component collectors (not fully supported in serverless without DB)
+          return { 
+             createMessageComponentCollector: () => ({ on: () => {} }) // Stub: collectors don't work well on serverless
+          };
+        }
+      };
+
+      try {
+        await command.execute(mockInteraction);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  });
+} 
+
 // Auto-Ping (backup strategy for Render/Glitch/Replit)
 // Pings itself every 14 minutes to prevent sleep
 if (process.env.RENDER_EXTERNAL_URL) {
@@ -91,12 +144,15 @@ process.on('unhandledRejection', error => {
   console.error('Unhandled promise rejection:', error);
 });
 
-client.login(process.env.DISCORD_TOKEN).catch(error => {
-  console.error('LOGIN ERROR:', error.message);
-  if (error.code === 'DisallowedIntents') {
-    console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
-  }
-  if (error.code === 'TokenInvalid') {
-    console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
-  }
-});
+if (!process.env.VERCEL) {
+  // Only start WebSocket Gateway if NOT running on Vercel
+  client.login(process.env.DISCORD_TOKEN).catch(error => {
+    console.error('LOGIN ERROR:', error.message);
+    if (error.code === 'DisallowedIntents') {
+      console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
+    }
+    if (error.code === 'TokenInvalid') {
+      console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
+    }
+  }); 
+}

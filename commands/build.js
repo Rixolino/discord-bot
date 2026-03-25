@@ -16,21 +16,21 @@ module.exports = {
     .addBooleanOption(option =>
       option
         .setName('all-os')
-        .setDescription('Show from all OS (default: no)')
+        .setDescription('Show from all OS (default: yes)')
         .setRequired(false)
     ),
 
   async execute(interaction) {
-    // deferReply non deve avere timeout, ma la risposta API sì.
-    // L'API della ricerca globale può metterci fino a 30-40 secondi.
+    // deferReply must not have a timeout, but the API response does.
+    // The global search API can take up to 30-40 seconds.
     await interaction.deferReply();
 
     const buildNumber = interaction.options.getString('number');
-    const allOs = interaction.options.getBoolean('all-os') || false;
+    const allOs = interaction.options.getBoolean('all-os') ?? true;
 
-    // Se l'utente chiede all-os, avvisiamo che potrebbe volerci tempo
+    // If user requests all-os, warn that it might take time
     if (allOs) {
-      await interaction.editReply(`🔍 Ricerca approfondita per **${buildNumber}** in corso... (può richiedere fino a 45 secondi)`);
+      await interaction.editReply(`🔍 Deep search for **${buildNumber}** in progress... (may take up to 45 seconds)`);
     }
 
     try {
@@ -122,7 +122,7 @@ module.exports = {
                   );
               components.push(row);
           }
-          return { embeds: contentEmbeds, components: components };
+          return { content: '', embeds: contentEmbeds, components: components };
       };
 
       const message = await interaction.editReply(getPayload(currentIndex));

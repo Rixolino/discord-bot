@@ -162,12 +162,18 @@ process.on('unhandledRejection', error => {
 });
 
 // Il client adesso fa login sempre all'avvio, usando il Gateway WS classico
-client.login(process.env.DISCORD_TOKEN).catch(error => {
-  console.error('LOGIN ERROR:', error.message);
-  if (error.code === 'DisallowedIntents') {
-    console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
-  }
-  if (error.code === 'TokenInvalid') {
-    console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
-  }
-});
+console.log('🔄 Attempting to login to Discord...');
+
+if (!process.env.DISCORD_TOKEN) {
+  console.error('❌ FATAL ERROR: DISCORD_TOKEN environment variable is strictly missing!');
+} else {
+  client.login(process.env.DISCORD_TOKEN).catch(error => {
+    console.error('LOGIN ERROR:', error.message);
+    if (error.code === 'DisallowedIntents') {
+      console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
+    }
+    if (error.code === 'TokenInvalid') {
+      console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
+    }
+  });
+}

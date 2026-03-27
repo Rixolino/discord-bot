@@ -132,6 +132,28 @@ client.once('ready', async () => {
   }
 });
 
+// Handles slash commands
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
+
+  console.log(`[Interaction] Received command /${interaction.commandName} from ${interaction.user.tag}`);
+
+  try {
+    await command.execute(interaction);
+    console.log(`[Interaction] Command /${interaction.commandName} executed successfully!`);
+  } catch (error) {
+    console.error(`[Interaction] Error executing /${interaction.commandName}:`, error.message || error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send followUp error:', e));
+    } else {
+      await interaction.reply({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send reply error:', e));
+    }
+  }
+});
+
 // Start express server only for Render's port binding requirement
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Web server listening on port ${PORT}`);

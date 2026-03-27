@@ -90,8 +90,10 @@ if (process.env.RENDER_EXTERNAL_URL) {
   console.log(`⏰ Keep-Alive activated for: ${url}`);
   
   setInterval(() => {
-    axios.get(url)
-      .then(() => console.log(`[Keep-Alive] Ping successful to ${url}`))
+    // Add / to the end of the URL if it doesn't have it to avoid redirect issues
+    const targetUrl = url.endsWith('/') ? url : `${url}/`;
+    axios.get(targetUrl)
+      .then(() => console.log(`[Keep-Alive] Ping successful to ${targetUrl}`))
       .catch(err => console.error(`[Keep-Alive] Error: ${err.message}`));
   }, 14 * 60 * 1000); // 14 minutes
 }

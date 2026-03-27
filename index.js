@@ -40,6 +40,8 @@ if (process.env.VERCEL) {
         user: member.user,
         deferReply: async () => {}, // Already deferred via response
         editReply: async (payload) => {
+          if (typeof payload === 'string') payload = { content: payload };
+          
           if (payload.embeds) payload.embeds = payload.embeds.map(e => e.toJSON ? e.toJSON() : e);
           if (payload.components) payload.components = payload.components.map(c => c.toJSON ? c.toJSON() : c);
           

@@ -40,7 +40,7 @@ module.exports = {
       console.log(`[Discord Bot] Searching build: ${buildNumber}, all-os: ${allOs}`);
       
       const response = await axios.get(url, {
-        timeout: 45000 // Aumentato a 45 secondi
+        timeout: 90000 // Aumentato a 90 secondi
       });
 
       const data = response.data;
@@ -153,8 +153,13 @@ module.exports = {
 
     } catch (error) {
       console.error('API Error:', error.message);
+      let errorMessage = error.response?.data?.error || error.message;
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = "La ricerca globale sta impiegando troppo tempo. Cerca di impostare `all-os: false` o riprova più tardi.";
+      }
+      
       await interaction.editReply({
-        content: `❌ Error: ${error.response?.data?.error || error.message}`
+        content: `❌ Request failed: ${errorMessage}`
       });
     }
   }

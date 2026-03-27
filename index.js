@@ -13,7 +13,9 @@ app.get('/', (req, res) => {
   res.send({ status: 'online', timestamp: new Date() });
 });
 
-if (process.env.VERCEL) {
+// Se presente in .env, questo lo configura come worker classico (scelta per render/vps)
+// Rimosso il supporto HTTP Interaction di Vercel, non è idoneo per carichi lunghi
+if (false) {
   // Use HTTP interactions on Vercel
   const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
 
@@ -45,12 +47,26 @@ if (process.env.VERCEL) {
           if (payload.embeds) payload.embeds = payload.embeds.map(e => e.toJSON ? e.toJSON() : e);
           if (payload.components) payload.components = payload.components.map(c => c.toJSON ? c.toJSON() : c);
           
-          try {
-            await axios.patch(
-              `https://discord.com/api/v10/webhooks/${process.env.DISCORD_CLIENT_ID}/${token}/messages/@original`,
-              payload
-            );
-          } catch(e) { console.error('Webhook Error:', e.response?.data || e.message); }
+          const sendPatch = async (retries = 5) => {
+            try {
+              console.log(`[Webhook] Sending patch to app ${process.env.DISCORD_CLIENT_ID}, token ${token.substring(0, 10)}... (payload length: ${JSON.stringify(payload).length})`);
+              const res = await axios.patch(
+                `https://discord.com/api/v10/webhooks/${process.env.DISCORD_CLIENT_ID}/${token}/messages/@original`,
+                payload
+              );
+              console.log(`[Webhook] Patch success! Status: ${res.status}`);
+            } catch(e) { 
+              if (e.response?.data?.code === 10008 && retries > 0) {
+                console.log(`[Webhook] 10008 Unknown Message - retrying in 2s (retries left: ${retries - 1})...`);
+                await new Promise(r => setTimeout(r, 2000));
+                return sendPatch(retries - 1);
+              }
+              console.error('Webhook Error Details:', e.response?.data || e.message); 
+            }
+          };
+          
+          await sendPatch();
+          
           // Return a mock message object for component collectors (not fully supported in serverless without DB)
           return { 
              createMessageComponentCollector: () => ({ on: () => {} }) // Stub: collectors don't work well on serverless
@@ -145,15 +161,13 @@ process.on('unhandledRejection', error => {
   console.error('Unhandled promise rejection:', error);
 });
 
-if (!process.env.VERCEL) {
-  // Only start WebSocket Gateway if NOT running on Vercel
-  client.login(process.env.DISCORD_TOKEN).catch(error => {
-    console.error('LOGIN ERROR:', error.message);
-    if (error.code === 'DisallowedIntents') {
-      console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
-    }
-    if (error.code === 'TokenInvalid') {
-      console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
-    }
-  }); 
-}
+// Il client adesso fa login sempre all'avvio, usando il Gateway WS classico
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+  console.error('LOGIN ERROR:', error.message);
+  if (error.code === 'DisallowedIntents') {
+    console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
+  }
+  if (error.code === 'TokenInvalid') {
+    console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
+  }
+});

@@ -100,7 +100,12 @@ if (process.env.RENDER_EXTERNAL_URL) {
 
 // Initialize client first, BEFORE app.listen
 const client = new Client({ 
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] 
+  intents: [
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildIntegrations
+  ] 
 });
 
 // Load commands (sync)

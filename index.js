@@ -144,14 +144,17 @@ client.on('interactionCreate', async (interaction) => {
   const command = client.commands.get(interaction.commandName);
   if (!command) return;
 
+  console.log(`[Interaction] Received command /${interaction.commandName} from ${interaction.user.tag}`);
+
   try {
     await command.execute(interaction);
+    console.log(`[Interaction] Command /${interaction.commandName} executed successfully!`);
   } catch (error) {
-    console.error(error);
+    console.error(`[Interaction] Error executing /${interaction.commandName}:`, error.message || error);
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: '❌ Error executing command!', ephemeral: true });
+      await interaction.followUp({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send followUp error:', e));
     } else {
-      await interaction.reply({ content: '❌ Error executing command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send reply error:', e));
     }
   }
 });

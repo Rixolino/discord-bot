@@ -105,8 +105,16 @@ const client = new Client({
     GatewayIntentBits.GuildMessages, 
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildIntegrations
-  ] 
+  ],
+  ws: {
+    helloTimeout: 120000, 
+    readyTimeout: 15000 
+  }
 });
+
+// Ascolta attivamente per ogni piccolo log di debug del WebSocket per capire dove si blocca
+client.on('debug', msg => console.log(`[WSS DEBUG] ${msg}`));
+
 
 // Load commands (sync)
 client.commands = new Collection();

@@ -16,8 +16,8 @@ app.get('/', (req, res) => {
 if (process.env.VERCEL) {
   // Use HTTP interactions on Vercel
   const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
-  
-  app.post('/interactions', express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }), verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY), async (req, res) => {
+
+  app.post('/interactions', verifyKeyMiddleware(process.env.DISCORD_PUBLIC_KEY), async (req, res) => {
     const { type, id, data, token, member } = req.body;
     
     if (type === InteractionType.PING) {

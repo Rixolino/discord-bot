@@ -157,12 +157,17 @@ client.on('interactionCreate', async (interaction) => {
 // Start express server only for Render's port binding requirement
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Web server listening on port ${PORT}`);
-  
-  // Login to Discord ONLY AFTER Express is bound
-  console.log('🔄 Attempting to login to Discord...');
-  if (!process.env.DISCORD_TOKEN) {
-    console.error('❌ FATAL ERROR: DISCORD_TOKEN is missing!');
-  } else {
-    client.login(process.env.DISCORD_TOKEN).catch(console.error);
-  }
 });
+
+// Login to Discord IMMEDIATELY
+console.log('🔄 Attempting to login to Discord...');
+if (!process.env.DISCORD_TOKEN) {
+  console.error('❌ FATAL ERROR: DISCORD_TOKEN is missing!');
+} else {
+  client.login(process.env.DISCORD_TOKEN).then(() => {
+    console.log('✅ Discord login sequence initiated successfully.');
+  }).catch(err => {
+    console.error('❌ FATAL LOGIN ERROR:', err);
+  });
+}
+

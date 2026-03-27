@@ -98,16 +98,12 @@ if (process.env.RENDER_EXTERNAL_URL) {
   }, 14 * 60 * 1000); // 14 minutes
 }
 
-app.listen(PORT, () => {
-  console.log(`🌐 Web server listening on port ${PORT}`);
-});
-// --------------------------------------------
-
+// Initialize client first, BEFORE app.listen
 const client = new Client({ 
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] 
 });
 
-// Load commands
+// Load commands (sync)
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -120,65 +116,31 @@ for (const file of commandFiles) {
   commands.push(command.data.toJSON());
 }
 
-// Register slash commands to Discord
 client.once('ready', async () => {
   console.log(`✓ Bot logged in as ${client.user.tag}`);
-  
+  // ... rest of ready event ...
   try {
     console.log('📝 Registering slash commands...');
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
-    
     await rest.put(
       Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
       { body: commands }
     );
-    
     console.log('✓ Slash commands registered');
   } catch (error) {
     console.error('✗ Error registering slash commands:', error);
   }
 });
 
-// Handles slash commands
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-
-  const command = client.commands.get(interaction.commandName);
-  if (!command) return;
-
-  console.log(`[Interaction] Received command /${interaction.commandName} from ${interaction.user.tag}`);
-
-  try {
-    await command.execute(interaction);
-    console.log(`[Interaction] Command /${interaction.commandName} executed successfully!`);
-  } catch (error) {
-    console.error(`[Interaction] Error executing /${interaction.commandName}:`, error.message || error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send followUp error:', e));
-    } else {
-      await interaction.reply({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send reply error:', e));
-    }
+// Start express server only for Render's port binding requirement
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌐 Web server listening on port ${PORT}`);
+  
+  // Login to Discord ONLY AFTER Express is bound
+  console.log('🔄 Attempting to login to Discord...');
+  if (!process.env.DISCORD_TOKEN) {
+    console.error('❌ FATAL ERROR: DISCORD_TOKEN is missing!');
+  } else {
+    client.login(process.env.DISCORD_TOKEN).catch(console.error);
   }
 });
-
-// Global error handling
-process.on('unhandledRejection', error => {
-  console.error('Unhandled promise rejection:', error);
-});
-
-// Il client adesso fa login sempre all'avvio, usando il Gateway WS classico
-console.log('🔄 Attempting to login to Discord...');
-
-if (!process.env.DISCORD_TOKEN) {
-  console.error('❌ FATAL ERROR: DISCORD_TOKEN environment variable is strictly missing!');
-} else {
-  client.login(process.env.DISCORD_TOKEN).catch(error => {
-    console.error('LOGIN ERROR:', error.message);
-    if (error.code === 'DisallowedIntents') {
-      console.error('>>> WARNING: You must enable "Message Content Intent" in the Developer Portal!');
-    }
-    if (error.code === 'TokenInvalid') {
-      console.error('>>> WARNING: The token is invalid (maybe you copied the Public Key?)');
-    }
-  });
-}

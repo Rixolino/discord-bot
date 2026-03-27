@@ -7,7 +7,7 @@ const axios = require('axios');
 
 // --- Setup Web Server & Keep-Alive ---
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || Math.floor(Math.random() * (10000 - 8000 + 1)) + 8000;
 
 app.get('/', (req, res) => {
   res.send({ status: 'online', timestamp: new Date() });
@@ -161,13 +161,16 @@ app.listen(PORT, '0.0.0.0', () => {
 
 // Login to Discord IMMEDIATELY
 console.log('🔄 Attempting to login to Discord...');
+console.log('TOKEN STATUS:', !!process.env.DISCORD_TOKEN);
 if (!process.env.DISCORD_TOKEN) {
-  console.error('❌ FATAL ERROR: DISCORD_TOKEN is missing!');
+  console.error('❌ FATAL ERROR: DISCORD_TOKEN is missing! Please set it in Render Environment Variables!');
+  process.exit(1); 
 } else {
   client.login(process.env.DISCORD_TOKEN).then(() => {
     console.log('✅ Discord login sequence initiated successfully.');
   }).catch(err => {
     console.error('❌ FATAL LOGIN ERROR:', err);
+    process.exit(1);
   });
 }
 

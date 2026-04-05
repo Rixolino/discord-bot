@@ -16,7 +16,17 @@ module.exports = {
           { name: 'Windows 11', value: 'windows-11' },
           { name: 'Windows 10', value: 'windows-10' },
           { name: 'Windows Server 2025', value: 'server-2025' },
-          { name: 'Windows Server 2022', value: 'server-2022' }
+          { name: 'Windows Server 2022', value: 'server-2022' },
+          { name: 'Windows 8.1', value: 'windows-8.1' },
+          { name: 'Windows 8', value: 'windows-8' },
+          { name: 'Windows 7', value: 'windows-7' },
+          { name: 'Windows Vista', value: 'windows-vista' },
+          { name: 'Windows XP', value: 'windows-xp' },
+          { name: 'Windows 2000', value: 'windows-2000' },
+          { name: 'Windows ME', value: 'windows-me' },
+          { name: 'Windows 98', value: 'windows-98' },
+          { name: 'Windows 95', value: 'windows-95' },
+          { name: 'Windows NT 4.0', value: 'windows-nt-4' }
         )
     ),
 
@@ -31,18 +41,27 @@ module.exports = {
         'windows-11': '22',
         'windows-10': '19',
         'server-2025': '26',
-        'server-2022': '20'
+        'server-2022': '20',
+        'windows-8.1': '6.3',
+        'windows-8': '6.2',
+        'windows-7': '6.1',
+        'windows-vista': '6.0',
+        'windows-xp': '5.1',
+        'windows-2000': '5.0',
+        'windows-me': '4.90',
+        'windows-98': '4.10',
+        'windows-95': '4.00',
+        'windows-nt-4': '4.0'
       };
 
       const buildPrefix = queries[version];
-      
-      // Call API with multiple queries
+      // Aumentato il timeout per gestire le build vecchie con all-os: true
       const url = `${API_BASE}/api/public/build-info?build=${buildPrefix}&betawiki=true&uupdump=true&all-os=true`;
       
-      console.log(`[Discord Bot] Searching recent builds for: ${version}`);
+      console.log(`[Discord Bot] Searching recent builds for: ${version} (Prefix: ${buildPrefix})`);
       
       const response = await axios.get(url, {
-        timeout: 10000
+        timeout: 90000 // Impostato a 90 secondi per non andare in timeout
       });
 
       const data = response.data;

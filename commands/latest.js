@@ -57,8 +57,8 @@ module.exports = {
       };
 
       const buildPrefix = queries[version];
-      // Aumentato il timeout per gestire le build vecchie con all-os: true
-      const url = `${API_BASE}/api/public/build-info?build=${buildPrefix}&betawiki=true&uupdump=true&all-os=true`;
+      // Usiamo il nuovo endpoint /latest/ che chiamerai nel server backend
+      const url = `${API_BASE}/api/public/latest/${version}`;
       
       console.log(`[Discord Bot] Searching recent builds for: ${version} (Prefix: ${buildPrefix})`);
       

@@ -159,10 +159,23 @@ client.on('interactionCreate', async (interaction) => {
     console.log(`[Interaction] Command /${interaction.commandName} executed successfully!`);
   } catch (error) {
     console.error(`[Interaction] Error executing /${interaction.commandName}:`, error.message || error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send followUp error:', e));
-    } else {
-      await interaction.reply({ content: '❌ Error executing command!', ephemeral: true }).catch(e => console.error('Failed to send reply error:', e));
+    
+    // Use flags: 64 instead of ephemeral: true to fix the deprecation warning
+    const payload = { content: '❌ Si è verificato un errore durante l\'esecuzione del comando (il bot potrebbe aver impiegato troppo tempo). Riprova!', flags: 64 };
+    
+    try {
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(payload);
+      } else {
+        await interaction.reply(payload);
+      }
+    } catch (fallbackError) {
+      if (fallbackError.code === 40060) {
+         // Discord dice che è già stata data una risposta, proviamo il followUp come piano B
+         await interaction.followUp(payload).catch(e => console.error('[Fallback] Errore critico finale:', e.message));
+      } else {
+         console.error('[Fallback] Impossibile avvisare l\'utente:', fallbackError.message);
+      }
     }
   }
 });

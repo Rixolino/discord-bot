@@ -64,6 +64,9 @@ module.exports = {
       
       const response = await axios.get(url, {
         timeout: 90000 // Impostato a 90 secondi per non andare in timeout
+      }).catch(err => {
+         console.error(`[API FAIL] GET ${url} fallita:`, err.message);
+         throw err;
       });
 
       const data = response.data;

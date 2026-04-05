@@ -21,9 +21,9 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    // deferReply must not have a timeout, but the API response does.
-    // The global search API can take up to 30-40 seconds.
-    await interaction.deferReply();
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferReply();
+    }
 
     const buildNumber = interaction.options.getString('number');
     const allOs = interaction.options.getBoolean('all-os') ?? true;

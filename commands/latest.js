@@ -137,8 +137,14 @@ module.exports = {
 
     } catch (error) {
       console.error('API Error:', error.message);
+      let errorMessage = error.response?.data?.error || error.message;
+      
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = "La ricerca globale per questa versione sta richiedendo troppo tempo per via dell'elevato numero di build. Riprova tra qualche minuto!";
+      }
+
       await interaction.editReply({
-        content: `❌ Error: ${error.response?.data?.error || error.message}`
+        content: `❌ Impossibile recuperare le build: ${errorMessage}`
       });
     }
   }
